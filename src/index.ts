@@ -1,10 +1,10 @@
-import { Client, GatewayIntentBits } from 'discord.js';
-
-import { initCommands } from './commands';
+import { Client, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { listInteraction } from './interactions/list';
 import { statisticsInteraction } from './interactions/stat';
 import { withLove } from './interactions/julika';
 import { onButtonInteraction } from './interactions/buttons';
+import { CLIENT_ID, GUILD_ID, TOKEN } from './config';
+import { commands } from './commands/commandsList';
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -14,7 +14,19 @@ client.once('ready', () => {
   console.log(`✅ Работаєм по тегу ${client.user?.tag}`);
 });
 
-initCommands();
+const rest = new REST({ version: '10' }).setToken(TOKEN);
+
+(async () => {
+  try {
+    console.log('Refreshing guild commands...');
+    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
+      body: commands,
+    });
+    console.log('Guild commands registered!');
+  } catch (error) {
+    console.error(error);
+  }
+})();
 
 // --- Обробка команд ---
 client.on('interactionCreate', async (interaction) => {
